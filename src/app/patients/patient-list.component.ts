@@ -21,6 +21,7 @@ export class PatientListComponent implements OnInit {
   showModal = signal(false);
   submitting = signal(false);
   sourceSystems = signal<SourceSystem[]>([]);
+  keyword: string = '';
 
   newPatient: any = {
     firstName: '',
@@ -50,7 +51,6 @@ export class PatientListComponent implements OnInit {
 
   loadSourceSystems(): void {
     this.svc.getSourceSystems().subscribe(resp => {
-      // resp.data expected to be an array of source systems
       this.sourceSystems.set(resp?.data || []);
     });
   }
@@ -75,6 +75,11 @@ export class PatientListComponent implements OnInit {
     this.showModal.set(true);
   }
 
+  onSearch(): void {
+    this.page.set(0);
+    this.load();
+  }
+
   closeModal(): void {
     this.showModal.set(false);
   }
@@ -91,7 +96,6 @@ export class PatientListComponent implements OnInit {
     if (this.newPatient.identifiers.length > 1) {
       this.newPatient.identifiers.splice(index, 1);
     } else {
-      // keep at least one empty identifier
       this.newPatient.identifiers = [{ type: 'Email', value: '', issuingAuthority: '', verified: false }];
     }
   }
@@ -101,26 +105,49 @@ export class PatientListComponent implements OnInit {
       return;
     }
     this.submitting.set(true);
-    // clone payload and normalise DOB to dd/mm/yyyy if browser date input provided yyyy-mm-dd
     const payload = JSON.parse(JSON.stringify(this.newPatient));
     payload.dob = this.formatDob(payload.dob);
 
-    this.svc.processPatient(payload).subscribe({
-      next: () => {
-        this.submitting.set(false);
-        this.closeModal();
-        this.load();
-      },
-      error: () => {
-        this.submitting.set(false);
-        // Ideally show error feedback; for now just keep modal open
+    if (payload.id) {
+      const id = payload.id;
+      this.svc.updatePatient(id, payload).subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.closeModal();
+          this.load();
+        },
+        error: () => {
+          this.submitting.set(false);
+        }
+      });
+    } else {
+      this.svc.processPatient(payload).subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.closeModal();
+          this.load();
+        },
+        error: () => {
+          this.submitting.set(false);
+        }
+      });
+    }
+  }
+
+  parseDobToInput(dob: string): string {
+    if (!dob) { return '' }
+    if (dob.includes('/')) {
+      const parts = dob.split('/');
+      if (parts.length === 3) {
+        const [d, m, y] = parts;
+        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
       }
-    });
+    }
+    return dob;
   }
 
   formatDob(dob: string): string {
     if (!dob) { return dob; }
-    // if in yyyy-mm-dd (HTML date input) convert to dd/mm/yyyy
     if (dob.includes('-')) {
       const parts = dob.split('-');
       if (parts.length === 3) {
@@ -132,7 +159,7 @@ export class PatientListComponent implements OnInit {
   }
 
   load(): void {
-    this.svc.getPatients(this.page(), this.size()).subscribe(resp => {
+    this.svc.getPatients(this.page(), this.size(), 'id', 'desc', this.keyword || '').subscribe(resp => {
       this.patients.set(resp.data.entries);
       this.totalPages.set(resp.data.paginationInfo.totalPages);
       this.totalElements.set(resp.data.paginationInfo.totalElements);
@@ -151,5 +178,41 @@ export class PatientListComponent implements OnInit {
       this.page.set(this.page() - 1);
       this.load();
     }
+  }
+
+  deletePatient(id: string): void {
+    if (!confirm('Are you sure you want to delete this patient?')) { return; }
+    this.svc.deletePatient(id).subscribe({
+      next: () => this.load(),
+      error: () => alert('Failed to delete patient')
+    });
+  }
+
+  editPatient(p: Patient): void {
+    if (!p?.id) { return; }
+    this.svc.getPatient(p.id).subscribe(resp => {
+      const data: any = resp?.data || {};
+      // reuse existing newPatient shape, map fields
+      this.newPatient = {
+        id: data.id,
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        dob: this.parseDobToInput(data.dob || ''),
+        gender: (data.gender || 'MALE').toUpperCase(),
+        phoneNo: data.phoneNo || '',
+        email: data.email || '',
+        address: data.address || '',
+        suburb: data.suburb || '',
+        state: data.state || '',
+        postalCode: data.postalCode || '',
+        country: data.country || '',
+        sourceSystemId: data.systemId || '',
+        externalPatientId: data.externalPatientId || '',
+        identifiers: (data.identifiers && data.identifiers.length) ? data.identifiers : [{ type: 'Email', value: '', issuingAuthority: '', verified: false }]
+      };
+      this.showModal.set(true);
+    }, () => {
+      alert('Failed to load patient details');
+    });
   }
 }

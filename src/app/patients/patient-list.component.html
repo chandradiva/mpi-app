@@ -1,6 +1,15 @@
 <h3>Patients</h3>
-<div style="margin-bottom:12px">
-  <button (click)="openModal()">Add Patient</button>
+<div style="display:flex; gap:8px; align-items:center; margin-bottom:12px">
+  <div>
+    <button class="action-btn" (click)="openModal()">Add Patient</button>
+  </div>
+  <div style="flex:1; display:flex; gap:8px; align-items:center; justify-content:flex-end">
+    <form (ngSubmit)="onSearch()" style="display:flex; gap:6px; width:auto; align-items:center; justify-content:flex-end">
+      <input name="keyword" class="search-input" [(ngModel)]="keyword" placeholder="Search patients..." />
+      <button type="submit" class="action-btn">Search</button>
+      <button type="button" class="action-btn" (click)="keyword=''; onSearch();">Clear</button>
+    </form>
+  </div>
 </div>
 <table>
   <thead>
@@ -12,6 +21,7 @@
       <th>Phone</th>
       <th>Link Status</th>
       <th>Score</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody>
@@ -23,6 +33,10 @@
       <td>{{p.phoneNo}}</td>
       <td>{{p.linkStatus}}</td>
       <td>{{p.confidenceScore}}</td>
+      <td>
+        <button class="action-btn" (click)="editPatient(p)">Edit</button>
+        <button class="action-btn" (click)="deletePatient(p.id)">Delete</button>
+      </td>
     </tr>
   </tbody>
 </table>

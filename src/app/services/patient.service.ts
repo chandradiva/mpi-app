@@ -29,8 +29,24 @@ export class PatientService {
     return this.http.post<any>(url, payload);
   }
 
+  deletePatient(id: string): Observable<any> {
+    const url = `${this.base}/patients`;
+    const params = new HttpParams().set('id', id);
+    return this.http.delete<any>(url, { params });
+  }
+
   getSourceSystems(): Observable<ApiResponseDto<any[]>> {
     const url = `${this.base}/source-systems`;
     return this.http.get<ApiResponseDto<any[]>>(url);
+  }
+
+  getPatient(id: string): Observable<ApiResponseDto<Patient>> {
+    const url = `${this.base}/patients/${id}`;
+    return this.http.get<ApiResponseDto<Patient>>(url);
+  }
+
+  updatePatient(id: string, payload: any): Observable<any> {
+    const url = `${this.base}/patients/${id}`;
+    return this.http.put<any>(url, payload);
   }
 }
