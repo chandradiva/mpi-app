@@ -1,0 +1,152 @@
+<h3>Patients</h3>
+<div style="margin-bottom:12px">
+  <button (click)="openModal()">Add Patient</button>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>Patient ID</th>
+      <th>Name</th>
+      <th>DOB</th>
+      <th>Gender</th>
+      <th>Phone</th>
+      <th>Link Status</th>
+      <th>Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let p of patients()">
+      <td>{{p.id}}</td>
+      <td>{{p.firstName}} {{p.lastName}}</td>
+      <td>{{p.dob}}</td>
+      <td>{{p.gender}}</td>
+      <td>{{p.phoneNo}}</td>
+      <td>{{p.linkStatus}}</td>
+      <td>{{p.confidenceScore}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="margin-top:12px">
+  <button (click)="prev()" [disabled]="page()===0">Previous</button>
+  <span>Page {{page()+1}} of {{totalPages()}}</span>
+  <button (click)="next()" [disabled]="page()+1>=totalPages()">Next</button>
+</div>
+
+<!-- Simple modal -->
+<div class="modal" *ngIf="showModal()">
+  <div class="modal-content">
+    <h4>Create Patient</h4>
+    <form (ngSubmit)="submit()" class="modal-form">
+      <div class="form-two">
+        <div>
+          <label>First name</label>
+          <input name="firstName" [(ngModel)]="newPatient.firstName" required />
+        </div>
+        <div>
+          <label>Last name</label>
+          <input name="lastName" [(ngModel)]="newPatient.lastName" required />
+        </div>
+
+        <div>
+          <label>DOB</label>
+          <input type="date" name="dob" [(ngModel)]="newPatient.dob" />
+        </div>
+        <div>
+          <label>Gender</label>
+          <select name="gender" [(ngModel)]="newPatient.gender">
+            <option value="MALE">Male</option>
+            <option value="FEMALE">Female</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Phone</label>
+          <input name="phoneNo" [(ngModel)]="newPatient.phoneNo" />
+        </div>
+        <div>
+          <label>Email</label>
+          <input name="email" [(ngModel)]="newPatient.email" />
+        </div>
+
+        <div class="full">
+          <label>Address</label>
+          <input name="address" [(ngModel)]="newPatient.address" />
+        </div>
+
+        <div>
+          <label>Suburb</label>
+          <input name="suburb" [(ngModel)]="newPatient.suburb" />
+        </div>
+        <div>
+          <label>State</label>
+          <input name="state" [(ngModel)]="newPatient.state" />
+        </div>
+
+        <div>
+          <label>Postal Code</label>
+          <input name="postalCode" [(ngModel)]="newPatient.postalCode" />
+        </div>
+        <div>
+          <label>Country</label>
+          <input name="country" [(ngModel)]="newPatient.country" />
+        </div>
+
+        <div>
+          <label>Source System</label>
+          <select name="sourceSystemId" [(ngModel)]="newPatient.sourceSystemId">
+            <option value="">-- Select source system --</option>
+            <option *ngFor="let s of sourceSystems()" [value]="s.id">{{s.systemName}}</option>
+          </select>
+        </div>
+        <div>
+          <label>External Patient ID</label>
+          <input name="externalPatientId" [(ngModel)]="newPatient.externalPatientId" />
+        </div>
+      </div>
+
+      <h5 style="margin-top:8px">Identifiers</h5>
+      <div *ngFor="let id of newPatient.identifiers; let i = index" class="ident-row">
+        <div class="form-two ident-row-inner">
+          <div>
+            <label>Type</label>
+            <select name="id-type-{{i}}" [(ngModel)]="id.type">
+              <option value="">-- Select identifier type --</option>
+              <option value="NATIONAL-ID">NATIONAL-ID</option>
+              <option value="MRN">MRN</option>
+              <option value="PASSPORT">PASSPORT</option>
+              <option value="Driving Lincense">Driving Lincense</option>
+              <option value="Email">Email</option>
+              <option value="Phone">Phone</option>
+            </select>
+          </div>
+          <div>
+            <label>Value</label>
+            <input name="id-value-{{i}}" [(ngModel)]="id.value" />
+          </div>
+          <div>
+            <label>Issuing Authority</label>
+            <input name="id-ia-{{i}}" [(ngModel)]="id.issuingAuthority" />
+          </div>
+          <div class="centered-vert">
+            <label>Verified</label>
+            <input type="checkbox" name="id-verified-{{i}}" [(ngModel)]="id.verified" />
+          </div>
+          <div class="ident-actions">
+            <button type="button" class="small" (click)="removeIdentifier(i)">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:6px">
+        <button type="button" (click)="addIdentifier()">Add Identifier</button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" (click)="closeModal()">Cancel</button>
+        <button type="submit" [disabled]="submitting()">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
